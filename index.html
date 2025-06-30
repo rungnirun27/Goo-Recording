@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบกิจกรรมของหายได้คืน - ปีการศึกษา 2568 (Online)</title>
+    <style>
+        /* CSS is unchanged */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Sarabun', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+        .header { background: linear-gradient(45deg, #2196F3, #21CBF3); color: white; padding: 30px; text-align: center; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .connection-status { background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 14px; transition: all 0.3s; }
+        .status-online { color: #00ff88; }
+        .status-offline { color: #ff6b6b; }
+        .nav-tabs { display: flex; flex-wrap: wrap; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+        .nav-tab { flex: 1; padding: 15px; text-align: center; background: #e9ecef; border: none; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s; min-width: 120px; }
+        .nav-tab.active { background: white; color: #2196F3; border-bottom: 3px solid #2196F3; }
+        .nav-tab:hover { background: #f8f9fa; }
+        .tab-content { display: none; padding: 30px; }
+        .tab-content.active { display: block; }
+        .main-grid, .student-grid, .items-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; margin-bottom: 30px; }
+        .form-section, .records-section, .list-section { background: #f8f9fa; padding: 25px; border-radius: 10px; border: 2px solid #e9ecef; }
+        .form-section h2, .records-section h2, .list-section h2 { color: #2c3e50; margin-bottom: 20px; font-size: 1.5em; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }
+        .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+        .form-group select:focus, .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
+        .activity-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .activity-btn { padding: 15px; border: 2px solid #ddd; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s; text-align: center; font-weight: bold; }
+        .activity-btn:hover { background: #e8f4fd; border-color: #3498db; }
+        .activity-btn.active { background: #3498db; color: white; border-color: #2980b9; }
+        .submit-btn { width: 100%; padding: 15px; background: linear-gradient(45deg, #27ae60, #2ecc71); color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s; position: relative; }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4); }
+        .submit-btn:disabled { background: #95a5a6; cursor: not-allowed; transform: none; }
+        .loading { display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #ecf0f1; transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 2em; font-weight: bold; color: #2c3e50; }
+        .stat-label { color: #7f8c8d; margin-top: 5px; }
+        .records-table, .student-list-table, .items-table { background: white; border-radius: 8px; overflow: hidden; border: 2px solid #ecf0f1; max-height: 500px; overflow-y: auto; }
+        .records-table table, .student-list-table table, .items-table table { width: 100%; border-collapse: collapse; }
+        .records-table th, .student-list-table th, .items-table th { background: #34495e; color: white; padding: 15px 10px; text-align: left; font-weight: bold; position: sticky; top: 0; z-index: 1;}
+        .records-table td, .student-list-table td, .items-table td { padding: 12px 10px; border-bottom: 1px solid #ecf0f1; vertical-align: middle; }
+        .records-table tr:hover, .student-list-table tr:hover, .items-table tr:hover { background: #f8f9fa; }
+        .score-badge { background: #3498db; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold; font-size: 0.9em; }
+        .activity-tag { background: #e74c3c; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold; }
+        .status-badge { padding: 5px 10px; border-radius: 15px; font-weight: bold; font-size: 0.9em; color: white; }
+        .status-remaining { background: #e67e22; }
+        .status-claimed { background: #27ae60; }
+        .btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; font-size: 14px; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .config-section { background: #fff3cd; border: 2px solid #ffeaa7; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .config-section h3 { color: #856404; margin-bottom: 15px; }
+        .config-section .form-group { margin-bottom: 15px; }
+        .config-section input { font-family: monospace; font-size: 14px; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; opacity: 1; transition: opacity 0.5s; }
+        .alert-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .alert-danger { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 992px) { .main-grid, .student-grid, .items-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .nav-tabs { flex-direction: column; } .stats-grid { grid-template-columns: 1fr; } .activity-buttons { grid-template-columns: 1fr; } .header h1 { font-size: 2em; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 ระบบกิจกรรมของหายได้คืน</h1>
+            <p>ปีการศึกษา 2568 - ส่งเสริมคุณธรรม จริยธรรม (Online)</p>
+            <div class="connection-status" id="connectionStatus">
+                <span id="statusIcon">🔄</span> <span id="statusText">กำลังเชื่อมต่อ...</span>
+            </div>
+            <div id="header-instruction" style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; margin-top: 10px; font-size: 13px;">
+                💡 เริ่มต้นใช้งาน: ไปแท็บ "⚙️ ตั้งค่าระบบ" เพื่อเชื่อมต่อกับ Google Apps Script
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab(event, 'record-tab')">📝 บันทึกความดี</button>
+            <button class="nav-tab" onclick="showTab(event, 'items-tab')">📦 รายการของ</button>
+            <button class="nav-tab" onclick="showTab(event, 'students-tab')">🧑‍🎓 จัดการนักเรียน</button>
+            <button class="nav-tab" onclick="showTab(event, 'reports-tab')">📊 รายงานสรุป</button>
+            <button class="nav-tab" onclick="showTab(event, 'config-tab')">⚙️ ตั้งค่าระบบ</button>
+        </div>
+
+        <!-- แท็บบันทึกความดี -->
+        <div id="record-tab" class="tab-content active">
+            <div class="main-grid">
+                <div class="form-section">
+                    <h2 id="form-title">📝 บันทึกความดี</h2>
+                    <form id="goodDeedForm">
+                         <input type="hidden" id="editingTimestamp" value="">
+                        <div class="form-group">
+                            <label for="studentSearch">ค้นหานักเรียน (ผู้ทำความดี):</label>
+                            <input type="text" id="studentSearch" placeholder="พิมพ์ชื่อ หรือ ชั้นเรียน เพื่อค้นหา..." style="margin-bottom: 10px;">
+                            <select id="studentSelect" required>
+                                <option value="">-- เลือกนักเรียน --</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label for="dateInput">วันที่:</label><input type="date" id="dateInput" required></div>
+                        <div class="form-group">
+                            <label>ประเภทกิจกรรม:</label>
+                            <div class="activity-buttons">
+                                <button type="button" class="activity-btn" data-activity="lost-found">📦 ของหายได้คืน</button>
+                                <button type="button" class="activity-btn" data-activity="money-found">💰 เงินหายได้คืน</button>
+                                <button type="button" class="activity-btn" data-activity="trash-pickup">🗑️ เก็บขยะ</button>
+                                <button type="button" class="activity-btn" data-activity="help-teacher">👩‍🏫 ช่วยงานครู</button>
+                                <button type="button" class="activity-btn" data-activity="other-good">✨ ความดีอื่นๆ</button>
+                            </div>
+                        </div>
+                        <div class="form-group" id="itemDescriptionGroup" style="display: none;"><label for="itemDescription">รายละเอียดของที่พบ:</label><input type="text" id="itemDescription" placeholder="เช่น กระเป๋าสีดำ, กล่องดินสอ"></div>
+                        <div class="form-group" id="moneyAmountGroup" style="display: none;"><label for="moneyAmount">จำนวนเงิน (บาท):</label><input type="number" id="moneyAmount" min="0" step="0.01" placeholder="0.00"></div>
+                        <div class="form-group"><label for="description">รายละเอียดเพิ่มเติม:</label><textarea id="description" rows="3" placeholder="เช่น พบที่สนามเด็กเล่น..."></textarea></div>
+                        <div class="form-group"><label for="pointsInput">คะแนนที่ได้รับ:</label><input type="number" id="pointsInput" min="1" value="5"></div>
+                        <button type="submit" class="submit-btn" id="submitBtn"><span class="loading spinner"></span><span class="btn-text">💾 บันทึกความดี</span></button>
+                        <button type="button" class="btn" id="cancelEditBtn" style="width: 100%; margin-top: 10px; background: #7f8c8d; color: white; display: none;" onclick="cancelEdit()">ยกเลิกการแก้ไข</button>
+                    </form>
+                </div>
+                <div class="records-section">
+                    <h2>📊 สถิติและประวัติการบันทึก</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-number" id="totalRecords">0</div><div class="stat-label">ครั้งที่บันทึก</div></div>
+                        <div class="stat-card"><div class="stat-number" id="totalPoints">0</div><div class="stat-label">คะแนนรวม</div></div>
+                        <div class="stat-card"><div class="stat-number" id="totalStudents">0</div><div class="stat-label">นักเรียน (จาก Sheet)</div></div>
+                        <div class="stat-card"><div class="stat-number" id="todayRecords">0</div><div class="stat-label">บันทึกวันนี้</div></div>
+                    </div>
+                    <div class="records-table">
+                        <table>
+                            <thead><tr><th>วันที่</th><th>ชื่อ-นามสกุล</th><th>กิจกรรม</th><th>คะแนน</th><th>จัดการ</th></tr></thead>
+                            <tbody id="recordsTableBody"><tr><td colspan="5" style="text-align: center; color: #7f8c8d; padding: 30px;">กำลังโหลดข้อมูล...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Items Tab -->
+        <div id="items-tab" class="tab-content">
+            <div class="items-grid">
+                <div class="list-section">
+                    <h2>📦 รายการของที่ยังคงเหลือ</h2>
+                    <div class="items-table">
+                        <table id="remainingItemsTable">
+                            <thead><tr><th>วันที่พบ</th><th>ของที่พบ</th><th>ผู้พบ</th><th>จัดการ</th></tr></thead>
+                            <tbody id="remainingItemsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="list-section">
+                    <h2>✅ ประวัติการรับคืนทั้งหมด</h2>
+                    <div class="items-table">
+                        <table id="claimedItemsTable">
+                             <thead><tr><th>วันที่รับคืน</th><th>ของที่พบ</th><th>ผู้รับคืน</th><th>ผู้พบเดิม</th></tr></thead>
+                            <tbody id="claimedItemsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Management Tab -->
+        <div id="students-tab" class="tab-content">
+            <div class="student-grid">
+                <div class="form-section">
+                    <h2>🧑‍🎓 เพิ่มนักเรียนใหม่</h2>
+                    <form id="addStudentForm">
+                        <div class="form-group"><label for="studentClass">ชั้น:</label><input type="text" id="studentClass" placeholder="เช่น ป.1/1" required></div>
+                        <div class="form-group"><label for="studentNumber">เลขที่:</label><input type="number" id="studentNumber" min="1" required></div>
+                        <div class="form-group"><label for="studentPrefix">คำนำหน้า:</label><input type="text" id="studentPrefix" placeholder="เช่น เด็กชาย, นางสาว" required></div>
+                        <div class="form-group"><label for="studentFirstName">ชื่อจริง:</label><input type="text" id="studentFirstName" required></div>
+                        <div class="form-group"><label for="studentLastName">นามสกุล:</label><input type="text" id="studentLastName" required></div>
+                        <button type="submit" class="submit-btn">➕ เพิ่มนักเรียน</button>
+                    </form>
+                    <hr style="margin: 30px 0; border-color: #dee2e6;">
+                    <h2>📥 นำเข้าจาก Excel</h2>
+                     <div class="alert alert-warning">
+                        <strong>คำแนะนำ:</strong> ไฟล์ Excel ต้องมี 5 คอลัมน์ เรียงตามลำดับ:
+                        <br>A: ชั้น, B: เลขที่, C: คำนำหน้า, D: ชื่อ, E: นามสกุล (ไม่ต้องมีหัวตาราง)
+                    </div>
+                    <div class="form-group">
+                        <label for="excelFileInput">เลือกไฟล์ Excel (.xlsx):</label>
+                        <input type="file" id="excelFileInput" class="form-control" accept=".xlsx, .xls">
+                    </div>
+                    <button id="importExcelBtn" class="btn btn-success" style="width: 100%;">นำเข้าข้อมูลจาก Excel</button>
+                </div>
+                <div class="list-section">
+                    <h2>📋 รายชื่อนักเรียนทั้งหมด</h2>
+                    <div class="student-list-table">
+                        <table id="studentListTable">
+                            <thead><tr><th>ชั้น</th><th>เลขที่</th><th>ชื่อ-นามสกุล</th><th>จัดการ</th></tr></thead>
+                            <tbody id="studentListBody"><tr><td colspan="4" style="text-align: center; color: #7f8c8d; padding: 30px;">กำลังโหลดข้อมูล...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports-tab" class="tab-content">
+            <div class="form-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>🏅 นักเรียนยอดเยี่ยม TOP 10</h2>
+                    <div>
+                        <button onclick="syncData()" class="btn btn-primary">🔄 ซิงค์ข้อมูล</button>
+                        <button onclick="exportToExcel()" class="btn btn-success">📊 ส่งออก Excel</button>
+                        <button onclick="printReport()" class="btn btn-primary">🖨️ พิมพ์รายงาน</button>
+                    </div>
+                </div>
+                <div class="top-students" id="topStudents"><div style="grid-column: 1 / -1; text-align: center; color: #7f8c8d; padding: 30px;">กำลังโหลดข้อมูลนักเรียนยอดเยี่ยม...</div></div>
+            </div>
+             <div class="form-section" style="margin-top: 20px;">
+                <h2>📋 หมายเหตุและคำแนะนำ</h2>
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: #856404; margin-bottom: 15px;">เกณฑ์การให้คะแนน:</h3>
+                    <ul style="color: #856404; margin: 0; padding-left: 20px;">
+                        <li><strong>ของหายได้คืน:</strong> 5 คะแนน</li>
+                        <li><strong>เงินหายได้คืน:</strong> 1 คะแนนต่อ 5 บาท (ขั้นต่ำ 1 คะแนน)</li>
+                        <li><strong>เก็บขยะ:</strong> 3 คะแนน</li>
+                        <li><strong>ช่วยงานครู:</strong> 4 คะแนน</li>
+                        <li><strong>ความดีอื่นๆ:</strong> 5 คะแนน (ปรับแก้ได้)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Config Tab -->
+        <div id="config-tab" class="tab-content">
+            <div class="config-section">
+                <h3>🔧 การเชื่อมต่อ Google Apps Script</h3>
+                <div class="alert alert-warning">
+                    <strong>คำแนะนำ:</strong> วาง URL ของ Web App ที่ได้จากการ Deploy ใน Google Apps Script ลงในช่องด้านล่าง แล้วกดบันทึก
+                </div>
+                <div class="form-group">
+                    <label for="webAppUrl">Google Apps Script Web App URL:</label>
+                    <input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/..." style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <button onclick="saveAndTestConnection()" class="btn btn-primary">🔗 บันทึกและทดสอบ</button>
+                    <button onclick="initializeSheets()" class="btn btn-danger">🚀 เริ่มต้นระบบบน Sheet</button>
+                </div>
+                <div id="testResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // --- GLOBAL VARIABLES ---
+        let allStudents = [];
+        let goodDeedRecords = [];
+        let allItems = [];
+        let studentScores = {};
+        let isOnline = false;
+        let webAppUrl = '';
+        let apiClient = null;
+
+        // --- CONSTANTS ---
+        const activityPoints = { 'lost-found': 5, 'money-found': 0, 'trash-pickup': 3, 'help-teacher': 4, 'other-good': 5 };
+        const activityNames = { 'lost-found': 'ของหายได้คืน', 'money-found': 'เงินหายได้คืน', 'trash-pickup': 'เก็บขยะ', 'help-teacher': 'ช่วยงานครู', 'other-good': 'ความดีอื่นๆ' };
+        const initialStudentsData = [
+            ['ป.1/1', 1, 'เด็กชาย', 'ธนวัฒน์', 'ชัยพันธ์'], ['ป.1/1', 2, 'เด็กชาย', 'ธรรมสรณ์', 'อ่อนไถล'],
+        ];
+
+        // --- SAFE UI HELPER ---
+        function safeSetText(id, text) {
+            const element = document.getElementById(id);
+            if (element) element.textContent = text;
+        }
+
+        // --- APPS SCRIPT API CLIENT ---
+        class AppsScriptAPI {
+            constructor(url) { this.url = url; }
+            async get(action) {
+                const response = await fetch(`${this.url}?action=${action}`, { method: 'GET', redirect: 'follow' });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                if (result.status !== 'success') throw new Error(result.message);
+                return result.data;
+            }
+            async post(action, payload) {
+                const response = await fetch(this.url, { method: 'POST', body: JSON.stringify({ action, data: payload }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                if (result.status !== 'success') throw new Error(result.message);
+                return result;
+            }
+        }
+
+        // --- CONFIGURATION ---
+        function loadConfig() {
+            const savedUrl = localStorage.getItem('webAppUrl');
+            if (savedUrl) {
+                document.getElementById('webAppUrl').value = savedUrl;
+                saveAndTestConnection();
+            }
+        }
+        async function saveAndTestConnection() {
+            const urlInput = document.getElementById('webAppUrl').value.trim();
+            if (!urlInput) { showAlert('กรุณาใส่ Web App URL', 'danger'); return; }
+            webAppUrl = urlInput;
+            localStorage.setItem('webAppUrl', webAppUrl);
+            apiClient = new AppsScriptAPI(webAppUrl);
+            const testResultDiv = document.getElementById('testResult');
+            testResultDiv.innerHTML = '<div class="spinner"></div> กำลังทดสอบ...';
+            try {
+                await apiClient.get('getRecords');
+                isOnline = true;
+                updateConnectionStatus(true, 'เชื่อมต่อสำเร็จ');
+                testResultDiv.innerHTML = '<div class="alert alert-success">✅ เชื่อมต่อสำเร็จ!</div>';
+                await loadAllData();
+            } catch (error) {
+                isOnline = false;
+                updateConnectionStatus(false, 'เชื่อมต่อไม่สำเร็จ');
+                testResultDiv.innerHTML = `<div class="alert alert-danger">❌ ไม่สามารถเชื่อมต่อได้ กรุณาตรวจสอบ URL และสิทธิ์การเข้าถึงของ Apps Script</div>`;
+            }
+        }
+        function updateConnectionStatus(connected, message) {
+            const connectionStatusDiv = document.getElementById('connectionStatus');
+            safeSetText('statusIcon', connected ? '🟢' : '🔴');
+            safeSetText('statusText', `${connected ? 'Online' : 'Offline'} - ${message}`);
+            if (connectionStatusDiv) connectionStatusDiv.className = connected ? 'connection-status status-online' : 'connection-status status-offline';
+        }
+
+        // --- DATA HANDLING ---
+        async function initializeSheets() {
+            if (!apiClient || !isOnline) { showAlert('กรุณาเชื่อมต่อก่อน', 'danger'); return; }
+            if (!confirm('ต้องการเริ่มต้นระบบใหม่หรือไม่? การดำเนินการนี้จะเขียนทับข้อมูลทั้งหมดใน Sheet')) return;
+            showAlert('กำลังเริ่มต้นระบบ...', 'warning');
+            try {
+                const payload = {
+                    students: [['ชั้น', 'เลขที่', 'คำนำหน้า', 'ชื่อ', 'นามสกุล'], ...initialStudentsData],
+                    records: [['วันที่', 'ชื่อ-นามสกุล', 'กิจกรรม', 'รายละเอียด', 'คะแนน', 'เวลาบันทึก']],
+                    items: [['Timestamp', 'ประเภท', 'รายละเอียด/จำนวนเงิน', 'วันที่พบ', 'ผู้พบ', 'สถานะ', 'ผู้รับคืน', 'วันที่รับคืน']]
+                };
+                await apiClient.post('initialize', payload);
+                showAlert('เริ่มต้นระบบสำเร็จ!', 'success');
+                await loadAllData();
+            } catch (error) { showAlert('เกิดข้อผิดพลาด: ' + error.message, 'danger'); }
+        }
+        async function loadAllData() {
+            if (!apiClient || !isOnline) return;
+            showAlert('กำลังโหลดข้อมูล...', 'info');
+            try {
+                const [studentsData, recordsData, itemsData] = await Promise.all([
+                    apiClient.get('getStudents'), apiClient.get('getRecords'), apiClient.get('getItems')
+                ]);
+                allStudents = studentsData.length > 1 ? studentsData.slice(1).map(row => ({ class: row[0] || '', number: parseInt(row[1]) || 0, prefix: row[2] || '', firstName: row[3] || '', lastName: row[4] || '', fullName: `${row[3] || ''} ${row[4] || ''}`.trim() })) : [];
+                goodDeedRecords = recordsData.length > 1 ? recordsData.slice(1).map(row => ({ date: row[0] || '', studentName: row[1] || '', activityName: row[2] || '', description: row[3] || '', points: parseInt(row[4]) || 0, timestamp: row[5] || '' })) : [];
+                allItems = itemsData.length > 1 ? itemsData.slice(1).map(row => ({ timestamp: row[0], type: row[1], description: row[2], dateFound: row[3], foundBy: row[4], status: row[5], claimedBy: row[6], dateClaimed: row[7] })) : [];
+                
+                studentScores = {};
+                goodDeedRecords.forEach(record => { studentScores[record.studentName] = (studentScores[record.studentName] || 0) + record.points; });
+
+                safeSetText('lastSync', new Date().toLocaleTimeString('th-TH'));
+                updateDisplay();
+                showAlert('โหลดข้อมูลสำเร็จ', 'success');
+            } catch (error) {
+                showAlert('โหลดข้อมูลล้มเหลว: ' + error.message, 'danger');
+                updateConnectionStatus(false, 'โหลดข้อมูลล้มเหลว');
+            }
+        }
+        async function syncData() {
+            if (!isOnline) { showAlert('ไม่สามารถซิงค์ได้', 'warning'); return; }
+            await loadAllData();
+        }
+
+        // --- STUDENT MANAGEMENT ---
+        function setupStudentManagement() {
+            document.getElementById('addStudentForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isOnline) { showAlert('ไม่สามารถเพิ่มได้ กรุณาเชื่อมต่อก่อน', 'danger'); return; }
+                const newStudent = [ document.getElementById('studentClass').value.trim(), document.getElementById('studentNumber').value, document.getElementById('studentPrefix').value.trim(), document.getElementById('studentFirstName').value.trim(), document.getElementById('studentLastName').value.trim() ];
+                if (newStudent.some(field => !field)) { showAlert('กรุณากรอกข้อมูลนักเรียนให้ครบถ้วน', 'warning'); return; }
+                showAlert('กำลังเพิ่มนักเรียน...', 'info');
+                try {
+                    await apiClient.post('addStudent', newStudent);
+                    showAlert('เพิ่มนักเรียนสำเร็จ!', 'success');
+                    e.target.reset();
+                    await loadAllData();
+                } catch (error) { showAlert('เกิดข้อผิดพลาด: ' + error.message, 'danger'); }
+            });
+            document.getElementById('studentListBody').addEventListener('click', async (e) => {
+                if (e.target && e.target.classList.contains('delete-btn')) {
+                    const fullName = e.target.dataset.name;
+                    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ "${fullName}"?`)) return;
+                    showAlert('กำลังลบนักเรียน...', 'info');
+                    try {
+                        await apiClient.post('deleteStudent', { fullName });
+                        showAlert(`ลบ ${fullName} สำเร็จ!`, 'success');
+                        await loadAllData();
+                    } catch (error) { showAlert('เกิดข้อผิดพลาด: ' + error.message, 'danger'); }
+                }
+            });
+            document.getElementById('importExcelBtn').addEventListener('click', handleExcelImport);
+        }
+        async function handleExcelImport() {
+            const fileInput = document.getElementById('excelFileInput');
+            const file = fileInput.files[0];
+            if (!file) { showAlert('กรุณาเลือกไฟล์ Excel ก่อน', 'warning'); return; }
+            if (!isOnline) { showAlert('ไม่สามารถนำเข้าได้ กรุณาเชื่อมต่อก่อน', 'danger'); return; }
+            showAlert('กำลังอ่านไฟล์ Excel...', 'info');
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    const studentsToImport = jsonData.filter(row => row.length >= 5 && row.slice(0, 5).some(cell => cell !== null && String(cell).trim() !== ''));
+                    if (studentsToImport.length === 0) { showAlert('ไม่พบข้อมูลที่ถูกต้องในไฟล์ Excel', 'warning'); return; }
+                    showAlert(`พบข้อมูล ${studentsToImport.length} รายการ กำลังนำเข้า...`, 'info');
+                    for (const row of studentsToImport) {
+                        try { await apiClient.post('addStudent', row.slice(0, 5)); } catch (err) { console.error('Failed to import row:', row, err); }
+                    }
+                    showAlert(`นำเข้าข้อมูลเสร็จสิ้น`, 'success');
+                    fileInput.value = '';
+                    await loadAllData();
+                } catch (error) { showAlert('เกิดข้อผิดพลาดในการประมวลผลไฟล์: ' + error.message, 'danger'); }
+            };
+            reader.onerror = () => { showAlert('ไม่สามารถอ่านไฟล์ได้', 'danger'); };
+            reader.readAsArrayBuffer(file);
+        }
+        function renderStudentManagementList() {
+            const tbody = document.getElementById('studentListBody');
+            if (!tbody) return;
+            if (allStudents.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 30px;">ไม่มีข้อมูลนักเรียน</td></tr>`; return; }
+            const sorted = [...allStudents].sort((a,b) => a.class.localeCompare(b.class, 'th') || a.number - b.number);
+            tbody.innerHTML = sorted.map(s => `<tr><td>${s.class}</td><td>${s.number}</td><td>${s.prefix}${s.firstName} ${s.lastName}</td><td><button class="btn btn-danger btn-sm delete-btn" data-name="${s.fullName}">ลบ</button></td></tr>`).join('');
+        }
+
+        // --- UI LOGIC & EVENT LISTENERS ---
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.querySelector('.tab-content.active') || document.body;
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
+            setTimeout(() => { alertDiv.style.opacity = '0'; setTimeout(() => alertDiv.remove(), 5000); }, 5000);
+        }
+        function populateStudentSelect(students) {
+            const studentSelect = document.getElementById('studentSelect');
+            if(!studentSelect) return;
+            const currentVal = studentSelect.value;
+            studentSelect.innerHTML = '<option value="">-- เลือกนักเรียน --</option>';
+            const sorted = [...students].sort((a,b) => a.class.localeCompare(b.class, 'th') || a.number - b.number);
+            let currentClass = '';
+            let optgroup = null;
+            sorted.forEach(s => {
+                if (s.class !== currentClass) {
+                    if (optgroup) studentSelect.appendChild(optgroup);
+                    optgroup = document.createElement('optgroup');
+                    optgroup.label = `ชั้น ${s.class}`;
+                    currentClass = s.class;
+                }
+                const option = document.createElement('option');
+                option.value = s.fullName;
+                option.textContent = `${s.number}. ${s.prefix}${s.firstName} ${s.lastName}`;
+                if(optgroup) optgroup.appendChild(option);
+            });
+            if (optgroup) studentSelect.appendChild(optgroup);
+            studentSelect.value = currentVal;
+        }
+        function setupGoodDeedForm() {
+            const form = document.getElementById('goodDeedForm');
+            if(!form) return;
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                if (!isOnline) { showAlert('ไม่สามารถบันทึกได้ กรุณาเชื่อมต่อก่อน', 'danger'); return; }
+                const studentName = document.getElementById('studentSelect').value;
+                const activeBtn = document.querySelector('.activity-btn.active');
+                if (!studentName || !activeBtn) { showAlert('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning'); return; }
+                
+                const submitBtn = document.getElementById('submitBtn');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const loading = submitBtn.querySelector('.loading');
+                const editingTimestamp = document.getElementById('editingTimestamp').value;
+                const activityType = activeBtn.dataset.activity;
+                
+                const itemDescription = document.getElementById('itemDescription').value.trim();
+                const moneyAmount = document.getElementById('moneyAmount').value;
+
+                if (activityType === 'lost-found' && !itemDescription) {
+                    showAlert('กรุณากรอก "รายละเอียดของที่พบ"', 'warning');
+                    return;
+                }
+                if (activityType === 'money-found' && (!moneyAmount || parseFloat(moneyAmount) <= 0)) {
+                    showAlert('กรุณากรอก "จำนวนเงิน" ให้ถูกต้อง', 'warning');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                loading.style.display = 'block';
+                btnText.textContent = editingTimestamp ? 'กำลังอัปเดต...' : 'กำลังบันทึก...';
+                
+                const points = parseInt(document.getElementById('pointsInput').value);
+                const timestamp = editingTimestamp || new Date().toISOString();
+                const recordData = [ document.getElementById('dateInput').value, studentName, activityNames[activityType], document.getElementById('description').value, points, timestamp ];
+                
+                try {
+                    if (editingTimestamp) {
+                        await apiClient.post('editRecord', { timestamp: editingTimestamp, newRecord: recordData });
+                    } else {
+                        await apiClient.post('appendRecord', recordData);
+                        if (activityType === 'lost-found') {
+                            const itemData = [ timestamp, 'ของ', itemDescription, recordData[0], studentName, 'คงเหลือ', '', '' ];
+                            await apiClient.post('logItemFound', itemData);
+                        } else if (activityType === 'money-found') {
+                            const itemData = [ timestamp, 'เงิน', moneyAmount, recordData[0], studentName, 'คงเหลือ', '', '' ];
+                            await apiClient.post('logItemFound', itemData);
+                        }
+                    }
+                    showAlert(editingTimestamp ? 'อัปเดตข้อมูลสำเร็จ!' : 'บันทึกข้อมูลสำเร็จ!', 'success');
+                    cancelEdit();
+                    await loadAllData();
+                } catch (error) {
+                    showAlert('เกิดข้อผิดพลาด: ' + error.message, 'danger');
+                } finally {
+                    submitBtn.disabled = false;
+                    loading.style.display = 'none';
+                }
+            });
+        }
+        function handleRecordActions(e) {
+            const target = e.target;
+            const timestamp = target.dataset.timestamp;
+            if (!timestamp) return;
+
+            if (target.classList.contains('edit-btn')) {
+                const recordToEdit = goodDeedRecords.find(r => r.timestamp == timestamp);
+                if (recordToEdit) {
+                    document.getElementById('editingTimestamp').value = recordToEdit.timestamp;
+                    document.getElementById('dateInput').value = recordToEdit.date;
+                    document.getElementById('studentSelect').value = recordToEdit.studentName;
+                    document.getElementById('description').value = recordToEdit.description;
+                    document.getElementById('pointsInput').value = recordToEdit.points;
+                    
+                    document.querySelectorAll('.activity-btn').forEach(btn => {
+                        const activityKey = Object.keys(activityNames).find(key => activityNames[key] === recordToEdit.activityName);
+                        btn.classList.toggle('active', btn.dataset.activity === activityKey);
+                        if(btn.classList.contains('active')){
+                            const relatedItem = allItems.find(item => item.timestamp === recordToEdit.timestamp);
+                            if (btn.dataset.activity === 'lost-found') {
+                                document.getElementById('itemDescriptionGroup').style.display = 'block';
+                                document.getElementById('itemDescription').value = relatedItem ? relatedItem.description : '';
+                            } else if (btn.dataset.activity === 'money-found') {
+                                document.getElementById('moneyAmountGroup').style.display = 'block';
+                                document.getElementById('moneyAmount').value = relatedItem ? relatedItem.description : '';
+                            }
+                        }
+                    });
+                    
+                    document.getElementById('form-title').textContent = '✏️ แก้ไขบันทึกความดี';
+                    document.querySelector('#submitBtn .btn-text').textContent = '💾 อัปเดตข้อมูล';
+                    document.getElementById('cancelEditBtn').style.display = 'block';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } else if (target.classList.contains('delete-btn')) {
+                if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? (การกระทำนี้จะลบรายการของที่เกี่ยวข้องด้วย)`)) {
+                    deleteRecord(timestamp);
+                }
+            }
+        }
+        async function deleteRecord(timestamp) {
+            showAlert('กำลังลบข้อมูล...', 'info');
+            try {
+                await apiClient.post('deleteRecord', { timestamp });
+                showAlert('ลบข้อมูลสำเร็จ!', 'success');
+                await loadAllData();
+            } catch (error) { showAlert('เกิดข้อผิดพลาดในการลบ: ' + error.message, 'danger'); }
+        }
+        function cancelEdit() {
+            document.getElementById('editingTimestamp').value = '';
+            document.getElementById('goodDeedForm').reset();
+            document.getElementById('form-title').textContent = '📝 บันทึกความดี';
+            document.querySelector('#submitBtn .btn-text').textContent = '💾 บันทึกความดี';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            document.querySelectorAll('.activity-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('itemDescriptionGroup').style.display = 'none';
+            document.getElementById('moneyAmountGroup').style.display = 'none';
+            setCurrentDate();
+        }
+        function updateDisplay() {
+            updateStats();
+            updateRecordsTable();
+            updateTopStudents();
+            populateStudentSelect(allStudents);
+            renderStudentManagementList();
+            renderItemsTables();
+        }
+        function updateStats() {
+            safeSetText('totalRecords', goodDeedRecords.length);
+            safeSetText('totalPoints', Object.values(studentScores).reduce((s, c) => s + c, 0).toLocaleString());
+            safeSetText('totalStudents', allStudents.length);
+            safeSetText('todayRecords', goodDeedRecords.filter(r => r.date === new Date().toISOString().split('T')[0]).length);
+        }
+        function updateRecordsTable() {
+            const tbody = document.getElementById('recordsTableBody');
+            if(!tbody) return;
+            if (goodDeedRecords.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px;">ยังไม่มีข้อมูล</td></tr>`; return; }
+            tbody.innerHTML = [...goodDeedRecords].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 50)
+                .map(r => {
+                    const isItemRelated = r.activityName === 'ของหายได้คืน' || r.activityName === 'เงินหายได้คืน';
+                    return `<tr>
+                        <td>${new Date(r.date).toLocaleDateString('th-TH')}</td>
+                        <td>${r.studentName}</td>
+                        <td><span class="activity-tag">${r.activityName}</span> ${r.description ? `<br><small>${r.description}</small>` : ''}</td>
+                        <td><span class="score-badge">${r.points}</span></td>
+                        <td>
+                            ${isItemRelated ? '' : `<button class="btn btn-warning btn-sm edit-btn" data-timestamp="${r.timestamp}">แก้ไข</button>`}
+                            <button class="btn btn-danger btn-sm delete-btn" data-timestamp="${r.timestamp}">ลบ</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+        }
+        function updateTopStudents() {
+            const div = document.getElementById('topStudents');
+            if(!div) return;
+            if (Object.keys(studentScores).length === 0) { div.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 30px;">ยังไม่มีข้อมูลคะแนน</div>`; return; }
+            const sorted = Object.entries(studentScores).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            div.innerHTML = sorted.map(([name, score], i) => `<div class="student-card"><div class="student-rank">${i + 1}</div><div class="student-name">${name}</div><div class="student-score">${score} คะแนน</div></div>`).join('');
+        }
+        function showTab(event, tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if(tabId !== 'record-tab') cancelEdit();
+        }
+        function setupSearch() {
+            const searchInput = document.getElementById('studentSearch');
+            if(searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    const filtered = !searchTerm ? allStudents : allStudents.filter(s => `${s.class} ${s.fullName}`.toLowerCase().includes(searchTerm));
+                    populateStudentSelect(filtered);
+                });
+            }
+        }
+        function setCurrentDate() {
+            const dateInput = document.getElementById('dateInput');
+            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        function setupActivityButtons() {
+            const activityBtns = document.querySelectorAll('.activity-btn');
+            const moneyGroup = document.getElementById('moneyAmountGroup');
+            const itemGroup = document.getElementById('itemDescriptionGroup');
+            const pointsInput = document.getElementById('pointsInput');
+            const moneyInput = document.getElementById('moneyAmount');
+            activityBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    activityBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const activity = this.dataset.activity;
+                    moneyGroup.style.display = activity === 'money-found' ? 'block' : 'none';
+                    itemGroup.style.display = activity === 'lost-found' ? 'block' : 'none';
+                    if (activity === 'money-found') {
+                        pointsInput.value = 1;
+                        moneyInput.value = '';
+                    } else {
+                        pointsInput.value = activityPoints[activity] || 5;
+                    }
+                });
+            });
+            if(moneyInput) {
+                moneyInput.addEventListener('input', function() {
+                    if(pointsInput) pointsInput.value = Math.max(1, Math.floor(parseFloat(this.value) || 0) / 5);
+                });
+            }
+        }
+        function renderItemsTables() {
+            const remainingBody = document.getElementById('remainingItemsBody');
+            const claimedBody = document.getElementById('claimedItemsBody');
+            if (!remainingBody || !claimedBody) return;
+
+            const remainingItems = allItems.filter(item => item.status === 'คงเหลือ');
+            const claimedItems = allItems.filter(item => item.status === 'รับคืนแล้ว');
+
+            remainingBody.innerHTML = remainingItems.length > 0 ? remainingItems.map(item => `
+                <tr>
+                    <td>${new Date(item.dateFound).toLocaleDateString('th-TH')}</td>
+                    <td>${item.type === 'เงิน' ? `${item.description} บาท` : item.description}</td>
+                    <td>${item.foundBy}</td>
+                    <td><button class="btn btn-success btn-sm claim-btn" data-timestamp="${item.timestamp}">รับคืน</button></td>
+                </tr>
+            `).join('') : `<tr><td colspan="4" style="text-align:center; padding: 20px;">ไม่มีของคงเหลือ</td></tr>`;
+
+            claimedBody.innerHTML = claimedItems.length > 0 ? claimedItems.map(item => `
+                <tr>
+                    <td>${new Date(item.dateClaimed).toLocaleDateString('th-TH')}</td>
+                    <td>${item.type === 'เงิน' ? `${item.description} บาท` : item.description}</td>
+                    <td>${item.claimedBy}</td>
+                    <td>${item.foundBy}</td>
+                </tr>
+            `).join('') : `<tr><td colspan="4" style="text-align:center; padding: 20px;">ยังไม่มีการรับคืน</td></tr>`;
+        }
+        async function handleItemClaim(e) {
+            if (e.target && e.target.classList.contains('claim-btn')) {
+                const timestamp = e.target.dataset.timestamp;
+                const claimedBy = prompt("กรุณาใส่ชื่อ-นามสกุล ของนักเรียนที่มารับของคืน:");
+                if (claimedBy && claimedBy.trim() !== '') {
+                    showAlert('กำลังบันทึกการรับคืน...', 'info');
+                    try {
+                        await apiClient.post('claimItem', {
+                            timestamp: timestamp,
+                            claimedBy: claimedBy.trim(),
+                            claimedDate: new Date().toISOString().split('T')[0]
+                        });
+                        showAlert('บันทึกการรับคืนสำเร็จ!', 'success');
+                        await loadAllData();
+                    } catch (error) {
+                        showAlert('เกิดข้อผิดพลาด: ' + error.message, 'danger');
+                    }
+                }
+            }
+        }
+        function exportToExcel() {
+            if (goodDeedRecords.length === 0 && allItems.length === 0) { showAlert('ไม่มีข้อมูลสำหรับส่งออก', 'warning'); return; }
+            const wb = XLSX.utils.book_new();
+            
+            const recordsWS = XLSX.utils.json_to_sheet(goodDeedRecords.map(r => ({ 'วันที่': r.date, 'ชื่อ-นามสกุล': r.studentName, 'กิจกรรม': r.activityName, 'รายละเอียด': r.description, 'คะแนน': r.points, 'Timestamp': r.timestamp })));
+            XLSX.utils.book_append_sheet(wb, recordsWS, 'ประวัติความดี');
+
+            const itemsWS = XLSX.utils.json_to_sheet(allItems.map(i => ({ 'Timestamp': i.timestamp, 'ประเภท': i.type, 'รายละเอียด/จำนวนเงิน': i.description, 'วันที่พบ': i.dateFound, 'ผู้พบ': i.foundBy, 'สถานะ': i.status, 'ผู้รับคืน': i.claimedBy, 'วันที่รับคืน': i.dateClaimed })));
+            XLSX.utils.book_append_sheet(wb, itemsWS, 'รายการของทั้งหมด');
+
+            const scoresWS = XLSX.utils.json_to_sheet(Object.entries(studentScores).sort((a,b)=>b[1]-a[1]).map(([n,s],i)=>({'อันดับ':i+1, 'ชื่อ-นามสกุล':n, 'คะแนนรวม':s})));
+            XLSX.utils.book_append_sheet(wb, scoresWS, 'สรุปคะแนน');
+
+            XLSX.writeFile(wb, `รายงานกิจกรรมความดี-${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.xlsx`);
+        }
+        function printReport() {
+            const printWindow = window.open('', '_blank');
+            const totalPoints = Object.values(studentScores).reduce((s, c) => s + c, 0);
+            const printContent = `<!DOCTYPE html><html><head><title>รายงานกิจกรรม</title><style>body{font-family: 'Sarabun', sans-serif;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #ddd; padding:8px;} h1,h2{text-align:center;}</style></head><body><h1>รายงานสรุปกิจกรรม</h1><p><strong>บันทึกทั้งหมด:</strong> ${goodDeedRecords.length}</p><p><strong>คะแนนรวม:</strong> ${totalPoints}</p><h2>นักเรียนยอดเยี่ยม 10 อันดับ</h2><table><tr><th>อันดับ</th><th>ชื่อ-นามสกุล</th><th>คะแนน</th></tr>${Object.entries(studentScores).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([n,s],i)=>`<tr><td>${i+1}</td><td>${n}</td><td>${s}</td></tr>`).join('')}</table></body></html>`;
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', function() {
+            updateConnectionStatus(false, 'ยังไม่ได้เชื่อมต่อ');
+            loadConfig();
+            setCurrentDate();
+            setupSearch();
+            setupActivityButtons();
+            setupGoodDeedForm();
+            setupStudentManagement();
+            document.getElementById('recordsTableBody').addEventListener('click', handleRecordActions);
+            document.getElementById('remainingItemsBody').addEventListener('click', handleItemClaim);
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
